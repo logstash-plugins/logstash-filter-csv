@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.summary         = "The CSV filter takes an event field containing CSV data, parses it, and stores it as individual fields (can optionally specify the names)."
   s.description     = "This gem is a logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/plugin install gemname. This gem is not a stand-alone program"
   s.authors         = ["Elasticsearch"]
-  s.email           = 'richard.pijnenburg@elasticsearch.com'
+  s.email           = 'info@elasticsearch.com'
   s.homepage        = "http://www.elasticsearch.org/guide/en/logstash/current/index.html"
   s.require_paths = ["lib"]
 
