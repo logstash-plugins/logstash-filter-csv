@@ -116,6 +116,22 @@ describe LogStash::Filters::CSV do
     end
   end
 
+  describe "parse csv with more data than defined column names without autogeneration of column names" do
+    config <<-CONFIG
+      filter {
+        csv {
+          autogenerate_column_names => false
+          columns => ["custom1", "custom2"]
+        }
+      }
+    CONFIG
+
+    sample "val1,val2,val3" do
+      insist { subject["custom1"] } == "val1"
+      insist { subject["custom2"] } == "val2"
+      reject { subject.include?("column3") }
+    end
+  end
 
   describe "parse csv from a given source with column names" do
     config <<-CONFIG
@@ -130,6 +146,24 @@ describe LogStash::Filters::CSV do
     sample("datafield" => "val1,val2,val3") do
       insist { subject["custom1"] } == "val1"
       insist { subject["custom2"] } == "val2"
+      insist { subject["custom3"] } == "val3"
+    end
+  end
+
+  describe "parse csv from a given source with column names while dropping empty columns" do
+    config <<-CONFIG
+      filter {
+        csv {
+          skip_empty_columns => true
+          source => "datafield"
+          columns => ["custom1", "custom2", "custom3"]
+        }
+      }
+    CONFIG
+
+    sample("datafield" => "val1,,val3") do
+      insist { subject["custom1"] } == "val1"
+      reject { subject.include?("custom2") }
       insist { subject["custom3"] } == "val3"
     end
   end
