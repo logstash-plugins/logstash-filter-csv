@@ -23,6 +23,13 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   # (e.g. "user_defined_1", "user_defined_2", "column3", "column4", etc.)
   config :columns, :validate => :array, :default => []
 
+  # Define if CSV data contain header line. If `contain_header` is `true`,
+  # first line will be parsed as column names. In the case that there are more columns
+  # in the data than parsed from the header line, specified `columns` will be used.
+  # In the case `columns` are not specified or data contain more columns than
+  # there are `columns` specified, auto-numbered columns will be used.
+  config :contain_header, :validate => :boolean, :default => false
+
   # Define the column separator value. If this is not specified, the default
   # is a comma `,`.
   # Optional.
@@ -39,9 +46,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
   public
   def register
-
-    # Nothing to do here
-
+    @headers = []
   end # def register
 
   public
@@ -66,21 +71,27 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
       raw = event[@source].first
       begin
-        values = CSV.parse_line(raw, :col_sep => @separator, :quote_char => @quote_char)
-
-        if @target.nil?
-          # Default is to write to the root of the event.
-          dest = event
+        if @contain_header && @headers.empty?
+          @headers = parse_line(raw)
+          event.cancel
         else
-          dest = event[@target] ||= {}
+          values = parse_line(raw)
+
+          if @target.nil?
+            # Default is to write to the root of the event.
+            dest = event
+          else
+            dest = event[@target] ||= {}
+          end
+
+          values.each_index do |i|
+            field_name = @headers[i] || @columns[i] || "column#{i+1}"
+            dest[field_name] = values[i]
+          end
+
+          filter_matched(event)
         end
 
-        values.each_index do |i|
-          field_name = @columns[i] || "column#{i+1}"
-          dest[field_name] = values[i]
-        end
-
-        filter_matched(event)
       rescue => e
         event.tag "_csvparsefailure"
         @logger.warn("Trouble parsing csv", :source => @source, :raw => raw,
@@ -92,6 +103,11 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
     @logger.debug("Event after csv filter", :event => event)
 
   end # def filter
+
+  private
+  def parse_line(line)
+    CSV.parse_line(line, :col_sep => @separator, :quote_char => @quote_char)
+  end
 
 end # class LogStash::Filters::Csv
 

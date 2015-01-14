@@ -171,5 +171,39 @@ describe LogStash::Filters::CSV do
     end
   end
 
+  describe "with header" do
+    # The logstash config goes here.
+    # At this time, only filters are supported.
+    config <<-CONFIG
+      filter {
+        csv {
+          contain_header => true
+        }
+      }
+    CONFIG
+
+    sample [ "header1,header2,header3", "val1,val2,val3" ] do
+      insist { subject["header1"] } == "val1"
+      insist { subject["header2"] } == "val2"
+      insist { subject["header3"] } == "val3"
+    end
+  end
+
+  describe "more columns in data than in header" do
+    # The logstash config goes here.
+    # At this time, only filters are supported.
+    config <<-CONFIG
+      filter {
+        csv {
+          contain_header => true
+        }
+      }
+    CONFIG
+
+    sample [ "header1", "val1,val2" ] do
+      insist { subject["header1"] } == "val1"
+      insist { subject["column2"] } == "val2"
+    end
+  end
 
 end
