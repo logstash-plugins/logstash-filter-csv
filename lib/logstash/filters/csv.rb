@@ -30,6 +30,11 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   # there are `columns` specified, auto-numbered columns will be used.
   config :contain_header, :validate => :boolean, :default => false
 
+  # If `contain_header` is `true`, this is how the filter determines which
+  # stream an event belongs to. The header will be read for every identified stream,
+  # e.g. for every input file it will use the first line as a header line.
+  config :stream_identity, :validate => :string, :default => "%{host}.%{path}.%{type}"
+
   # Define the column separator value. If this is not specified, the default
   # is a comma `,`.
   # Optional.
@@ -46,13 +51,12 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
   public
   def register
-    @headers = []
+    @headers = {}
   end # def register
 
   public
   def filter(event)
     return unless filter?(event)
-
     @logger.debug("Running csv filter", :event => event)
 
     matches = 0
@@ -71,8 +75,9 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
       raw = event[@source].first
       begin
-        if @contain_header && @headers.empty?
-          @headers = parse_line(raw)
+        stream = event.sprintf(@stream_identity)
+        if @contain_header && !@headers.key?(stream)
+          @headers[stream] = parse_line(raw)
           event.cancel
         else
           values = parse_line(raw)
@@ -85,7 +90,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
           end
 
           values.each_index do |i|
-            field_name = @headers[i] || @columns[i] || "column#{i+1}"
+            field_name = header(stream, i)
             dest[field_name] = values[i]
           end
 
@@ -107,6 +112,16 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   private
   def parse_line(line)
     CSV.parse_line(line, :col_sep => @separator, :quote_char => @quote_char)
+  end
+
+  private
+  def header(stream, column)
+    user_defined = if @headers.key?(stream)
+                     @headers[stream][column]
+                   else
+                     @columns[column]
+                   end
+    user_defined || "column#{column+1}"
   end
 
 end # class LogStash::Filters::Csv

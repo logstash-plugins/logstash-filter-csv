@@ -206,4 +206,71 @@ describe LogStash::Filters::CSV do
     end
   end
 
+  describe "multiple streams" do
+    # The logstash config goes here.
+    # At this time, only filters are supported.
+    config <<-CONFIG
+      filter {
+        csv {
+          contain_header => true
+        }
+      }
+    CONFIG
+
+    # We mix two CSV files with different paths
+    eventstream = [
+        LogStash::Event.new("message" => "doc1_h1,doc1_h2", "path" => "doc1"),
+        LogStash::Event.new("message" => "val1,val2",       "path" => "doc1"),
+        LogStash::Event.new("message" => "doc2_h1,doc2_h2", "path" => "doc2"),
+        LogStash::Event.new("message" => "val3,val4",       "path" => "doc2"),
+        LogStash::Event.new("message" => "val5,val6",       "path" => "doc1"),
+    ]
+
+    events = eventstream.map{|event| event.to_hash}
+
+    sample events do
+      expect(subject).to be_a(Array)
+      insist { subject.size } == 3
+
+      # Make sure headers from both CSV files are used
+      insist { subject[0]["doc1_h1"] } == "val1"
+      insist { subject[0]["doc1_h2"] } == "val2"
+      insist { subject[1]["doc2_h1"] } == "val3"
+      insist { subject[1]["doc2_h2"] } == "val4"
+      insist { subject[2]["doc1_h1"] } == "val5"
+      insist { subject[2]["doc1_h2"] } == "val6"
+    end
+  end
+
+  describe "given identity field" do
+    # The logstash config goes here.
+    # At this time, only filters are supported.
+    config <<-CONFIG
+      filter {
+        csv {
+          contain_header => true
+          stream_identity => "%{identity}"
+        }
+      }
+    CONFIG
+
+    eventstream = [
+        LogStash::Event.new("message" => "doc1_h1,doc1_h2", "identity" => "doc1"),
+        LogStash::Event.new("message" => "doc2_h1,doc2_h2", "identity" => "doc2"),
+        LogStash::Event.new("message" => "val1,val2",       "identity" => "doc1"),
+        LogStash::Event.new("message" => "val3,val4",       "identity" => "doc2"),
+    ]
+
+    events = eventstream.map{|event| event.to_hash}
+
+    sample events do
+      expect(subject).to be_a(Array)
+      insist { subject.size } == 2
+
+      insist { subject[0]["doc1_h1"] } == "val1"
+      insist { subject[0]["doc1_h2"] } == "val2"
+      insist { subject[1]["doc2_h1"] } == "val3"
+      insist { subject[1]["doc2_h2"] } == "val4"
+    end
+  end
 end
