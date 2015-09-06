@@ -22,14 +22,14 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   # (e.g. "user_defined_1", "user_defined_2", "column3", "column4", etc.)
   config :columns, :validate => :array, :default => []
 
-  # Define if CSV data contain header line. If `contain_header` is `true`,
+  # Define if CSV data contains header line. If `contains_header` is `true`,
   # first line will be parsed as column names. In the case that there are more columns
   # in the data than parsed from the header line, specified `columns` will be used.
   # In the case `columns` are not specified or data contain more columns than
   # there are `columns` specified, auto-numbered columns will be used.
-  config :contain_header, :validate => :boolean, :default => false
+  config :contains_header, :validate => :boolean, :default => false
 
-  # If `contain_header` is `true`, this is how the filter determines which
+  # If `contains_header` is `true`, this is how the filter determines which
   # stream an event belongs to. The header will be read for every identified stream,
   # e.g. for every input file it will use the first line as a header line.
   config :stream_identity, :validate => :string, :default => "%{host}.%{path}.%{type}"
@@ -75,7 +75,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
       raw = event[@source].first
       begin
         stream = event.sprintf(@stream_identity)
-        if @contain_header && !@headers.key?(stream)
+        if @contains_header && !@headers.key?(stream)
           @headers[stream] = parse_line(raw)
           event.cancel
         else

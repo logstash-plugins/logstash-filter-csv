@@ -177,7 +177,7 @@ describe LogStash::Filters::CSV do
     config <<-CONFIG
       filter {
         csv {
-          contain_header => true
+          contains_header => true
         }
       }
     CONFIG
@@ -195,7 +195,7 @@ describe LogStash::Filters::CSV do
     config <<-CONFIG
       filter {
         csv {
-          contain_header => true
+          contains_header => true
         }
       }
     CONFIG
@@ -212,7 +212,7 @@ describe LogStash::Filters::CSV do
     config <<-CONFIG
       filter {
         csv {
-          contain_header => true
+          contains_header => true
         }
       }
     CONFIG
@@ -248,7 +248,7 @@ describe LogStash::Filters::CSV do
     config <<-CONFIG
       filter {
         csv {
-          contain_header => true
+          contains_header => true
           stream_identity => "%{identity}"
         }
       }
