@@ -45,7 +45,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
   public
   def filter(event)
-    return unless filter?(event)
+    
 
     @logger.debug("Running csv filter", :event => event)
 
