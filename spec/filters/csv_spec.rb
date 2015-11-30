@@ -205,5 +205,31 @@ describe LogStash::Filters::CSV do
     end
   end
 
+  # Use a more rspec3 syntax, avoiding the usage of sample
+  # and insist in favor of rspec helpers methods
+  describe LogStash::Filters::CSV  do
+
+
+    subject(:plugin) { LogStash::Filters::CSV.new(config) }
+    let(:config) { Hash.new }
+
+    let(:doc) { ""}
+    let(:event) { LogStash::Event.new("message" => doc) }
+
+
+    before(:each) do
+      plugin.register
+    end
+
+    describe "using default values" do
+      let(:doc) { "big,bird,sesame street" }
+      it "should not mutate the source field" do
+        plugin.filter(event)
+        expect(event["message"]).to be_kind_of(String)
+      end
+    end
+
+  end
+
 
 end
