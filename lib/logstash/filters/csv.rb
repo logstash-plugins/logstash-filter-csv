@@ -53,28 +53,13 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
   public
   def filter(event)
-    
 
     @logger.debug("Running csv filter", :event => event)
 
-    matches = 0
-
     if event[@source]
-      if event[@source].is_a?(String)
-        event[@source] = [event[@source]]
-      end
-
-      if event[@source].length > 1
-        @logger.warn("csv filter only works on fields of length 1",
-                     :source => @source, :value => event[@source],
-                     :event => event)
-        return
-      end
-
-      raw = event[@source].first
+      source = event[@source].clone
       begin
-        values = CSV.parse_line(raw, :col_sep => @separator, :quote_char => @quote_char)
-
+        values = CSV.parse_line(source, :col_sep => @separator, :quote_char => @quote_char)
         if @target.nil?
           # Default is to write to the root of the event.
           dest = event
@@ -97,8 +82,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
         filter_matched(event)
       rescue => e
         event.tag "_csvparsefailure"
-        @logger.warn("Trouble parsing csv", :source => @source, :raw => raw,
-                      :exception => e)
+        @logger.warn("Trouble parsing csv", :field => @source, :source => source, :exception => e)
         return
       end # begin
     end # if event
