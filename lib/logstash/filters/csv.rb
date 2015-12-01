@@ -56,8 +56,20 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   #     }
   config :convert, :validate => :hash, :default => {}
 
+
+  ##
+  # List of valid conversion types used for the convert option
+  ##
+  VALID_CONVERT_TYPES = [ "integer", "float", "date", "date_time", "boolean" ].freeze
+
+
   def register
-    # Nothing to do here
+    # validate conversion types to be the valid ones.
+    @convert.each_pair do |column, type|
+      if !VALID_CONVERT_TYPES.include?(type)
+        raise LogStash::ConfigurationError, "#{type} is not a valid conversion type."
+      end
+    end
   end # def register
 
   def filter(event)
