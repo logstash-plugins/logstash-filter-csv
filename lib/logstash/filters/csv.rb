@@ -78,8 +78,8 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
           if !(@skip_empty_columns && (values[i].nil? || values[i].empty?))
             if !ignore_field?(i)
               field_name       = @columns[i] ? @columns[i] : "column#{i+1}"
-              dest[field_name] = if should_convert?(field_name)
-                                   convert(field_name, values[i])
+              dest[field_name] = if should_transform?(field_name)
+                                   transform(field_name, values[i])
                                  else
                                    values[i]
                                  end
@@ -104,11 +104,11 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
     !@columns[index] && !@autogenerate_column_names
   end
 
-  def should_convert?(field_name)
+  def should_transform?(field_name)
     !@convert[field_name].nil?
   end
 
-  def convert(field_name, value)
+  def transform(field_name, value)
     transformation = @convert[field_name].to_sym
     converters[transformation].call(value)
   end
