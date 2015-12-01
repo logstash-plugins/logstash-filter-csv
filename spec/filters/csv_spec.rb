@@ -180,7 +180,6 @@ describe LogStash::Filters::CSV do
       expect(event["data"]["column3"]).to eq("sesame street")
     end
 
-
     context "when having also source" do
       let(:config) do
         {  "source" => "datain",
@@ -196,5 +195,37 @@ describe LogStash::Filters::CSV do
         expect(event["data"]["column3"]).to eq("sesame street")
       end
     end
+  end
+
+  describe "using field convertion" do
+
+    let(:config) do
+      { "convert" => { "column1" => "integer", "column3" => "boolean" } }
+    end
+    let(:doc)   { "1234,bird,false" }
+    let(:event) { LogStash::Event.new("message" => doc) }
+
+    it "get converted values to the expected type" do
+      plugin.filter(event)
+      expect(event["column1"]).to eq(1234)
+      expect(event["column2"]).to eq("bird")
+      expect(event["column3"]).to eq(false)
+    end
+
+    context "when using column names" do
+
+      let(:config) do
+        { "convert" => { "custom1" => "integer", "custom3" => "boolean" },
+          "columns" => ["custom1", "custom2", "custom3"] }
+      end
+
+      it "get converted values to the expected type" do
+        plugin.filter(event)
+        expect(event["custom1"]).to eq(1234)
+        expect(event["custom2"]).to eq("bird")
+        expect(event["custom3"]).to eq(false)
+      end
+    end
+
   end
 end

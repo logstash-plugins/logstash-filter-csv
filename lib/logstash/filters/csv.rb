@@ -44,16 +44,23 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   # Defaults to false. If set to true, columns containing no value will not get set.
   config :skip_empty_columns, :validate => :boolean, :default => false
 
-  public
+  # Define a set of datatype conversions to be applied to columns.
+  # Possible conversions are integer, float, date, date_time, boolean
+  #
+  # # Example:
+  # [source,ruby]
+  #     filter {
+  #       csv {
+  #         convert => { "column1" => "integer", "column2" => "boolean" }
+  #       }
+  #     }
+  config :convert, :validate => :hash, :default => {}
+
   def register
-
     # Nothing to do here
-
   end # def register
 
-  public
   def filter(event)
-
     @logger.debug("Running csv filter", :event => event)
 
     if event[@source]
@@ -69,16 +76,16 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
         values.each_index do |i|
           if !(@skip_empty_columns && (values[i].nil? || values[i].empty?))
-            if @columns[i]
-              field_name = @columns[i]
-              dest[field_name] = values[i]
-            elsif @autogenerate_column_names
-              field_name = "column#{i+1}"
-              dest[field_name] = values[i]
+            if !ignore_field?(i)
+              field_name       = @columns[i] ? @columns[i] : "column#{i+1}"
+              dest[field_name] = if should_convert?(field_name)
+                                   convert(field_name, values[i])
+                                 else
+                                   values[i]
+                                 end
             end
           end
         end
-
         filter_matched(event)
       rescue => e
         event.tag "_csvparsefailure"
@@ -91,5 +98,44 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
   end # def filter
 
+  private
+
+  def ignore_field?(index)
+    !@columns[index] && !@autogenerate_column_names
+  end
+
+  def should_convert?(field_name)
+    !@convert[field_name].nil?
+  end
+
+  def convert(field_name, value)
+    transformation = @convert[field_name].to_sym
+    converters[transformation].call(value)
+  end
+
+  def converters
+    @converters ||= {
+      :integer => lambda do |value|
+        CSV::Converters[:integer].call(value)
+      end,
+      :float => lambda do |value|
+        CSV::Converters[:float].call(value)
+
+      end,
+      :date => lambda do |value|
+        CSV::Converters[:date].call(value)
+
+      end,
+      :date_time => lambda do |value|
+        CSV::Converters[:date_time].call(value)
+      end,
+      :boolean => lambda do |value|
+         value = value.strip.downcase
+         return false if value == "false"
+         return true  if value == "true"
+         return value
+      end
+    }
+  end
 end # class LogStash::Filters::Csv
 
