@@ -1,5 +1,5 @@
 ## 2.1.0
- - Added support for not parsing coluns without a defined header.
+ - Added support for not parsing columns without a defined header.
  - Added support for dropping columns that has no value
  - Added support for type conversion within the filter
  - Fix unnecessary source field mutation. Fixes #18
