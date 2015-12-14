@@ -1,276 +1,340 @@
 # encoding: utf-8
-
 require "logstash/devutils/rspec/spec_helper"
 require "logstash/filters/csv"
 
 describe LogStash::Filters::CSV do
 
-  describe "all defaults" do
-    # The logstash config goes here.
-    # At this time, only filters are supported.
-    config <<-CONFIG
-      filter {
-        csv { }
-      }
-    CONFIG
+  subject(:plugin) { LogStash::Filters::CSV.new(config) }
+  let(:config) { Hash.new }
 
-    sample "big,bird,sesame street" do
-      insist { subject["column1"] } == "big"
-      insist { subject["column2"] } == "bird"
-      insist { subject["column3"] } == "sesame street"
+  let(:doc)   { "" }
+  let(:event) { LogStash::Event.new("message" => doc) }
+
+  describe "registration" do
+
+    context "when using invalid data types" do
+      let(:config) do
+        { "convert" => { "custom1" => "integer", "custom3" => "wrong_type" },
+          "columns" => ["custom1", "custom2", "custom3"] }
+      end
+
+      it "should register" do
+        input = LogStash::Plugin.lookup("filter", "csv").new(config)
+        expect {input.register}.to raise_error
+      end
     end
   end
 
-  describe "custom separator" do
-    config <<-CONFIG
-      filter {
-        csv {
-          separator => ";"
-        }
-      }
-    CONFIG
+  describe "receive" do
 
-    sample "big,bird;sesame street" do
-      insist { subject["column1"] } == "big,bird"
-      insist { subject["column2"] } == "sesame street"
+    before(:each) do
+      plugin.register
     end
-  end
 
-  describe "custom quote char" do
-    config <<-CONFIG
-      filter {
-        csv {
-          quote_char => "'"
-        }
-      }
-    CONFIG
+    describe "all defaults" do
 
-    sample "big,bird,'sesame street'" do
-      insist { subject["column1"] } == "big"
-      insist { subject["column2"] } == "bird"
-      insist { subject["column3"] } == "sesame street"
+      let(:config) { Hash.new }
+
+      let(:doc) { "big,bird,sesame street" }
+
+      it "extract all the values" do
+        plugin.filter(event)
+        expect(event["column1"]).to eq("big")
+        expect(event["column2"]).to eq("bird")
+        expect(event["column3"]).to eq("sesame street")
+      end
+
+      it "should not mutate the source field" do
+        plugin.filter(event)
+        expect(event["message"]).to be_kind_of(String)
+      end
     end
-  end
 
-  describe "default quote char" do
-    config <<-CONFIG
-      filter {
-        csv {
-        }
-      }
-    CONFIG
+    describe "custom separator" do
+      let(:doc) { "big,bird;sesame street" }
 
-    sample 'big,bird,"sesame, street"' do
-      insist { subject["column1"] } == "big"
-      insist { subject["column2"] } == "bird"
-      insist { subject["column3"] } == "sesame, street"
+      let(:config) do
+        { "separator" => ";" }
+      end
+      it "extract all the values" do
+        plugin.filter(event)
+        expect(event["column1"]).to eq("big,bird")
+        expect(event["column2"]).to eq("sesame street")
+      end
     end
-  end
-  describe "null quote char" do
-    config <<-CONFIG
-      filter {
-        csv {
-          quote_char => "\x00"
-        }
-      }
-    CONFIG
 
-    sample 'big,bird,"sesame" street' do
-      insist { subject["column1"] } == 'big'
-      insist { subject["column2"] } == 'bird'
-      insist { subject["column3"] } == '"sesame" street'
+    describe "quote char" do
+      let(:doc) { "big,bird,'sesame street'" }
+
+      let(:config) do
+        { "quote_char" => "'"}
+      end
+
+      it "extract all the values" do
+        plugin.filter(event)
+        expect(event["column1"]).to eq("big")
+        expect(event["column2"]).to eq("bird")
+        expect(event["column3"]).to eq("sesame street")
+      end
+
+      context "using the default one" do
+        let(:doc) { 'big,bird,"sesame, street"' }
+        let(:config) { Hash.new }
+
+        it "extract all the values" do
+          plugin.filter(event)
+          expect(event["column1"]).to eq("big")
+          expect(event["column2"]).to eq("bird")
+          expect(event["column3"]).to eq("sesame, street")
+        end
+      end
+
+      context "using a null" do
+        let(:doc) { 'big,bird,"sesame" street' }
+        let(:config) do
+          { "quote_char" => "\x00" }
+        end
+
+        it "extract all the values" do
+          plugin.filter(event)
+          expect(event["column1"]).to eq("big")
+          expect(event["column2"]).to eq("bird")
+          expect(event["column3"]).to eq('"sesame" street')
+        end
+      end
     end
-  end
 
-  describe "given columns" do
-    # The logstash config goes here.
-    # At this time, only filters are supported.
-    config <<-CONFIG
-      filter {
-        csv {
-          columns => ["first", "last", "address" ]
-        }
-      }
-    CONFIG
+    describe "given column names" do
+      let(:doc)    { "big,bird,sesame street" }
+      let(:config) do
+        { "columns" => ["first", "last", "address" ] }
+      end
 
-    sample "big,bird,sesame street" do
-      insist { subject["first"] } == "big"
-      insist { subject["last"] } == "bird"
-      insist { subject["address"] } == "sesame street"
+      it "extract all the values" do
+        plugin.filter(event)
+        expect(event["first"]).to eq("big")
+        expect(event["last"]).to eq("bird")
+        expect(event["address"]).to eq("sesame street")
+      end
+
+      context "parse csv without autogeneration of names" do
+
+        let(:doc)    { "val1,val2,val3" }
+        let(:config) do
+          {  "autogenerate_column_names" => false,
+             "columns" => ["custom1", "custom2"] }
+        end
+
+        it "extract all the values" do
+          plugin.filter(event)
+          expect(event["custom1"]).to eq("val1")
+          expect(event["custom2"]).to eq("val2")
+          expect(event["column3"]).to be_falsey
+        end
+      end
+
+      context "parse csv skipping empty columns" do
+
+        let(:doc)    { "val1,,val3" }
+
+        let(:config) do
+          { "skip_empty_columns" => true,
+            "source" => "datafield",
+            "columns" => ["custom1", "custom2", "custom3"] }
+        end
+
+        let(:event) { LogStash::Event.new("datafield" => doc) }
+
+        it "extract all the values" do
+          plugin.filter(event)
+          expect(event["custom1"]).to eq("val1")
+          expect(event["custom2"]).to be_falsey
+          expect(event["custom3"]).to eq("val3")
+        end
+      end
+
+      context "parse csv with more data than defined" do
+        let(:doc)    { "val1,val2,val3" }
+        let(:config) do
+          { "columns" => ["custom1", "custom2"] }
+        end
+
+        it "extract all the values" do
+          plugin.filter(event)
+          expect(event["custom1"]).to eq("val1")
+          expect(event["custom2"]).to eq("val2")
+          expect(event["column3"]).to eq("val3")
+        end
+      end
+
+      context "parse csv from a given source" do
+        let(:doc)    { "val1,val2,val3" }
+        let(:config) do
+          { "source"  => "datafield",
+            "columns" => ["custom1", "custom2", "custom3"] }
+        end
+        let(:event) { LogStash::Event.new("datafield" => doc) }
+
+        it "extract all the values" do
+          plugin.filter(event)
+          expect(event["custom1"]).to eq("val1")
+          expect(event["custom2"]).to eq("val2")
+          expect(event["custom3"]).to eq("val3")
+        end
+      end
     end
-  end
 
-  describe "parse csv with more data than defined column names" do
-    config <<-CONFIG
-      filter {
-        csv {
-          columns => ["custom1", "custom2"]
-        }
-      }
-    CONFIG
+    describe "givin target" do
+      let(:config) do
+        { "target" => "data" }
+      end
+      let(:doc)   { "big,bird,sesame street" }
+      let(:event) { LogStash::Event.new("message" => doc) }
 
-    sample "val1,val2,val3" do
-      insist { subject["custom1"] } == "val1"
-      insist { subject["custom2"] } == "val2"
-      insist { subject["column3"] } == "val3"
+      it "extract all the values" do
+        plugin.filter(event)
+        expect(event["data"]["column1"]).to eq("big")
+        expect(event["data"]["column2"]).to eq("bird")
+        expect(event["data"]["column3"]).to eq("sesame street")
+      end
+
+      context "when having also source" do
+        let(:config) do
+          {  "source" => "datain",
+             "target" => "data" }
+        end
+        let(:event) { LogStash::Event.new("datain" => doc) }
+        let(:doc)   { "big,bird,sesame street" }
+
+        it "extract all the values" do
+          plugin.filter(event)
+          expect(event["data"]["column1"]).to eq("big")
+          expect(event["data"]["column2"]).to eq("bird")
+          expect(event["data"]["column3"]).to eq("sesame street")
+        end
+      end
     end
-  end
 
+    describe "using field convertion" do
 
-  describe "parse csv from a given source with column names" do
-    config <<-CONFIG
-      filter {
-        csv {
-          source => "datafield"
-          columns => ["custom1", "custom2", "custom3"]
-        }
-      }
-    CONFIG
+      let(:config) do
+        { "convert" => { "column1" => "integer", "column3" => "boolean" } }
+      end
+      let(:doc)   { "1234,bird,false" }
+      let(:event) { LogStash::Event.new("message" => doc) }
 
-    sample("datafield" => "val1,val2,val3") do
-      insist { subject["custom1"] } == "val1"
-      insist { subject["custom2"] } == "val2"
-      insist { subject["custom3"] } == "val3"
+      it "get converted values to the expected type" do
+        plugin.filter(event)
+        expect(event["column1"]).to eq(1234)
+        expect(event["column2"]).to eq("bird")
+        expect(event["column3"]).to eq(false)
+      end
+
+      context "when using column names" do
+
+        let(:config) do
+          { "convert" => { "custom1" => "integer", "custom3" => "boolean" },
+            "columns" => ["custom1", "custom2", "custom3"] }
+        end
+
+        it "get converted values to the expected type" do
+          plugin.filter(event)
+          expect(event["custom1"]).to eq(1234)
+          expect(event["custom2"]).to eq("bird")
+          expect(event["custom3"]).to eq(false)
+        end
+      end
     end
-  end
 
-  describe "given target" do
-    # The logstash config goes here.
-    # At this time, only filters are supported.
-    config <<-CONFIG
-      filter {
-        csv {
-          target => "data"
-        }
-      }
-    CONFIG
+    describe "with header" do
+      let(:config) do
+        { "contains_header" => "true" }
+      end
 
-    sample "big,bird,sesame street" do
-      insist { subject["data"]["column1"] } == "big"
-      insist { subject["data"]["column2"] } == "bird"
-      insist { subject["data"]["column3"] } == "sesame street"
-    end
-  end
+      context "all columns have a header" do
+        let(:event1) { LogStash::Event.new("message" => "header1,header2,header3") }
+        let(:event2) { LogStash::Event.new("message" => "val1,val2,val3") }
 
-  describe "given target and source" do
-    # The logstash config goes here.
-    # At this time, only filters are supported.
-    config <<-CONFIG
-      filter {
-        csv {
-          source => "datain"
-          target => "data"
-        }
-      }
-    CONFIG
+        it "extract headers and values" do
+          plugin.filter(event1)
+          expect(event1.cancelled?).to eq(true)
 
-    sample("datain" => "big,bird,sesame street") do
-      insist { subject["data"]["column1"] } == "big"
-      insist { subject["data"]["column2"] } == "bird"
-      insist { subject["data"]["column3"] } == "sesame street"
-    end
-  end
+          plugin.filter(event2)
+          expect(event2.cancelled?).to eq(false)
+          expect(event2["header1"]).to eq("val1")
+          expect(event2["header2"]).to eq("val2")
+          expect(event2["header3"]).to eq("val3")
+        end
+      end
 
-  describe "with header" do
-    # The logstash config goes here.
-    # At this time, only filters are supported.
-    config <<-CONFIG
-      filter {
-        csv {
-          contains_header => true
-        }
-      }
-    CONFIG
+      context "not all columns have a header" do
+        let(:event1) { LogStash::Event.new("message" => "header1") }
+        let(:event2) { LogStash::Event.new("message" => "val1,val2") }
 
-    sample [ "header1,header2,header3", "val1,val2,val3" ] do
-      insist { subject["header1"] } == "val1"
-      insist { subject["header2"] } == "val2"
-      insist { subject["header3"] } == "val3"
-    end
-  end
+        it "generate missing field name" do
+          plugin.filter(event1)
 
-  describe "more columns in data than in header" do
-    # The logstash config goes here.
-    # At this time, only filters are supported.
-    config <<-CONFIG
-      filter {
-        csv {
-          contains_header => true
-        }
-      }
-    CONFIG
+          plugin.filter(event2)
+          expect(event2["header1"]).to eq("val1")
+          expect(event2["column2"]).to eq("val2")
+        end
+      end
 
-    sample [ "header1", "val1,val2" ] do
-      insist { subject["header1"] } == "val1"
-      insist { subject["column2"] } == "val2"
-    end
-  end
+      context "multiple streams" do
+        let(:event1) { LogStash::Event.new("message" => "doc1_h1,doc1_h2", "path" => "doc1") }
+        let(:event2) { LogStash::Event.new("message" => "val1,val2",       "path" => "doc1") }
+        let(:event3) { LogStash::Event.new("message" => "doc2_h1,doc2_h2", "path" => "doc2") }
+        let(:event4) { LogStash::Event.new("message" => "val3,val4",       "path" => "doc2") }
+        let(:event5) { LogStash::Event.new("message" => "val5,val6",       "path" => "doc1") }
 
-  describe "multiple streams" do
-    # The logstash config goes here.
-    # At this time, only filters are supported.
-    config <<-CONFIG
-      filter {
-        csv {
-          contains_header => true
-        }
-      }
-    CONFIG
+        it "extract headers and values" do
+          plugin.filter(event1)
+          expect(event1.cancelled?).to eq(true)
 
-    # We mix two CSV files with different paths
-    eventstream = [
-        LogStash::Event.new("message" => "doc1_h1,doc1_h2", "path" => "doc1"),
-        LogStash::Event.new("message" => "val1,val2",       "path" => "doc1"),
-        LogStash::Event.new("message" => "doc2_h1,doc2_h2", "path" => "doc2"),
-        LogStash::Event.new("message" => "val3,val4",       "path" => "doc2"),
-        LogStash::Event.new("message" => "val5,val6",       "path" => "doc1"),
-    ]
+          plugin.filter(event2)
+          expect(event2["doc1_h1"]).to eq("val1")
+          expect(event2["doc1_h2"]).to eq("val2")
 
-    events = eventstream.map{|event| event.to_hash}
+          plugin.filter(event3)
+          expect(event3.cancelled?).to eq(true)
 
-    sample events do
-      expect(subject).to be_a(Array)
-      insist { subject.size } == 3
+          plugin.filter(event4)
+          expect(event4["doc2_h1"]).to eq("val3")
+          expect(event4["doc2_h2"]).to eq("val4")
 
-      # Make sure headers from both CSV files are used
-      insist { subject[0]["doc1_h1"] } == "val1"
-      insist { subject[0]["doc1_h2"] } == "val2"
-      insist { subject[1]["doc2_h1"] } == "val3"
-      insist { subject[1]["doc2_h2"] } == "val4"
-      insist { subject[2]["doc1_h1"] } == "val5"
-      insist { subject[2]["doc1_h2"] } == "val6"
-    end
-  end
+          plugin.filter(event5)
+          expect(event5["doc1_h1"]).to eq("val5")
+          expect(event5["doc1_h2"]).to eq("val6")
+        end
+      end
 
-  describe "given identity field" do
-    # The logstash config goes here.
-    # At this time, only filters are supported.
-    config <<-CONFIG
-      filter {
-        csv {
-          contains_header => true
-          stream_identity => "%{identity}"
-        }
-      }
-    CONFIG
+      context "given identity field" do
+        let(:config) do
+          { "contains_header" => "true",
+            "stream_identity" => "%{identity}" }
+        end
 
-    eventstream = [
-        LogStash::Event.new("message" => "doc1_h1,doc1_h2", "identity" => "doc1"),
-        LogStash::Event.new("message" => "doc2_h1,doc2_h2", "identity" => "doc2"),
-        LogStash::Event.new("message" => "val1,val2",       "identity" => "doc1"),
-        LogStash::Event.new("message" => "val3,val4",       "identity" => "doc2"),
-    ]
+        let(:event1) { LogStash::Event.new("message" => "doc1_h1,doc1_h2", "identity" => "doc1") }
+        let(:event2) { LogStash::Event.new("message" => "doc2_h1,doc2_h2", "identity" => "doc2") }
+        let(:event3) { LogStash::Event.new("message" => "val1,val2",       "identity" => "doc1") }
+        let(:event4) { LogStash::Event.new("message" => "val3,val4",       "identity" => "doc2") }
 
-    events = eventstream.map{|event| event.to_hash}
+        it "extract headers and values" do
+          plugin.filter(event1)
+          expect(event1.cancelled?).to eq(true)
 
-    sample events do
-      expect(subject).to be_a(Array)
-      insist { subject.size } == 2
+          plugin.filter(event2)
+          expect(event2.cancelled?).to eq(true)
 
-      insist { subject[0]["doc1_h1"] } == "val1"
-      insist { subject[0]["doc1_h2"] } == "val2"
-      insist { subject[1]["doc2_h1"] } == "val3"
-      insist { subject[1]["doc2_h2"] } == "val4"
+          plugin.filter(event3)
+          expect(event3["doc1_h1"]).to eq("val1")
+          expect(event3["doc1_h2"]).to eq("val2")
+
+          plugin.filter(event4)
+          expect(event4["doc2_h1"]).to eq("val3")
+          expect(event4["doc2_h2"]).to eq("val4")
+        end
+      end
     end
   end
 end
