@@ -245,5 +245,96 @@ describe LogStash::Filters::CSV do
         end
       end
     end
+
+    describe "with header" do
+      let(:config) do
+        { "contains_header" => "true" }
+      end
+
+      context "all columns have a header" do
+        let(:event1) { LogStash::Event.new("message" => "header1,header2,header3") }
+        let(:event2) { LogStash::Event.new("message" => "val1,val2,val3") }
+
+        it "extract headers and values" do
+          plugin.filter(event1)
+          expect(event1.cancelled?).to eq(true)
+
+          plugin.filter(event2)
+          expect(event2.cancelled?).to eq(false)
+          expect(event2["header1"]).to eq("val1")
+          expect(event2["header2"]).to eq("val2")
+          expect(event2["header3"]).to eq("val3")
+        end
+      end
+
+      context "not all columns have a header" do
+        let(:event1) { LogStash::Event.new("message" => "header1") }
+        let(:event2) { LogStash::Event.new("message" => "val1,val2") }
+
+        it "generate missing field name" do
+          plugin.filter(event1)
+
+          plugin.filter(event2)
+          expect(event2["header1"]).to eq("val1")
+          expect(event2["column2"]).to eq("val2")
+        end
+      end
+
+      context "multiple streams" do
+        let(:event1) { LogStash::Event.new("message" => "doc1_h1,doc1_h2", "path" => "doc1") }
+        let(:event2) { LogStash::Event.new("message" => "val1,val2",       "path" => "doc1") }
+        let(:event3) { LogStash::Event.new("message" => "doc2_h1,doc2_h2", "path" => "doc2") }
+        let(:event4) { LogStash::Event.new("message" => "val3,val4",       "path" => "doc2") }
+        let(:event5) { LogStash::Event.new("message" => "val5,val6",       "path" => "doc1") }
+
+        it "extract headers and values" do
+          plugin.filter(event1)
+          expect(event1.cancelled?).to eq(true)
+
+          plugin.filter(event2)
+          expect(event2["doc1_h1"]).to eq("val1")
+          expect(event2["doc1_h2"]).to eq("val2")
+
+          plugin.filter(event3)
+          expect(event3.cancelled?).to eq(true)
+
+          plugin.filter(event4)
+          expect(event4["doc2_h1"]).to eq("val3")
+          expect(event4["doc2_h2"]).to eq("val4")
+
+          plugin.filter(event5)
+          expect(event5["doc1_h1"]).to eq("val5")
+          expect(event5["doc1_h2"]).to eq("val6")
+        end
+      end
+
+      context "given identity field" do
+        let(:config) do
+          { "contains_header" => "true",
+            "stream_identity" => "%{identity}" }
+        end
+
+        let(:event1) { LogStash::Event.new("message" => "doc1_h1,doc1_h2", "identity" => "doc1") }
+        let(:event2) { LogStash::Event.new("message" => "doc2_h1,doc2_h2", "identity" => "doc2") }
+        let(:event3) { LogStash::Event.new("message" => "val1,val2",       "identity" => "doc1") }
+        let(:event4) { LogStash::Event.new("message" => "val3,val4",       "identity" => "doc2") }
+
+        it "extract headers and values" do
+          plugin.filter(event1)
+          expect(event1.cancelled?).to eq(true)
+
+          plugin.filter(event2)
+          expect(event2.cancelled?).to eq(true)
+
+          plugin.filter(event3)
+          expect(event3["doc1_h1"]).to eq("val1")
+          expect(event3["doc1_h2"]).to eq("val2")
+
+          plugin.filter(event4)
+          expect(event4["doc2_h1"]).to eq("val3")
+          expect(event4["doc2_h2"]).to eq("val4")
+        end
+      end
+    end
   end
 end

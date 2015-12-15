@@ -22,6 +22,18 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   # (e.g. "user_defined_1", "user_defined_2", "column3", "column4", etc.)
   config :columns, :validate => :array, :default => []
 
+  # Define if CSV data contains header line. If `contains_header` is `true`,
+  # first line will be parsed as column names. In the case that there are more columns
+  # in the data than parsed from the header line, specified `columns` will be used.
+  # In the case `columns` are not specified or data contain more columns than
+  # there are `columns` specified, auto-numbered columns will be used.
+  config :contains_header, :validate => :boolean, :default => false
+
+  # If `contains_header` is `true`, this is how the filter determines which
+  # stream an event belongs to. The header will be read for every identified stream,
+  # e.g. for every input file it will use the first line as a header line.
+  config :stream_identity, :validate => :string, :default => "%{host}.%{path}.%{type}"
+
   # Define the column separator value. If this is not specified, the default
   # is a comma `,`.
   # Optional.
@@ -64,6 +76,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
 
   def register
+    @headers = {}
     # validate conversion types to be the valid ones.
     @convert.each_pair do |column, type|
       if !VALID_CONVERT_TYPES.include?(type)
@@ -78,27 +91,34 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
     if event[@source]
       source = event[@source].clone
       begin
-        values = CSV.parse_line(source, :col_sep => @separator, :quote_char => @quote_char)
-        if @target.nil?
-          # Default is to write to the root of the event.
-          dest = event
-        else
-          dest = event[@target] ||= {}
-        end
+        stream = event.sprintf(@stream_identity)
 
-        values.each_index do |i|
-          if !(@skip_empty_columns && (values[i].nil? || values[i].empty?))
-            if !ignore_field?(i)
-              field_name       = @columns[i] ? @columns[i] : "column#{i+1}"
-              dest[field_name] = if should_transform?(field_name)
-                                   transform(field_name, values[i])
-                                 else
-                                   values[i]
-                                 end
+        if @contains_header && (!@headers.key?(stream))
+          @headers[stream] = parse_line(source)
+          event.cancel
+        else
+          values = parse_line(source)
+          if @target.nil?
+            # Default is to write to the root of the event.
+            dest = event
+          else
+            dest = event[@target] ||= {}
+          end
+
+          values.each_index do |i|
+            if !(@skip_empty_columns && (values[i].nil? || values[i].empty?))
+              if !ignore_field?(i)
+                field_name       = header(stream, i)
+                dest[field_name] = if should_transform?(field_name)
+                                     transform(field_name, values[i])
+                                   else
+                                     values[i]
+                                   end
+              end
             end
           end
+          filter_matched(event)
         end
-        filter_matched(event)
       rescue => e
         event.tag "_csvparsefailure"
         @logger.warn("Trouble parsing csv", :field => @source, :source => source, :exception => e)
@@ -111,6 +131,19 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   end # def filter
 
   private
+
+  def parse_line(line)
+    CSV.parse_line(line, :col_sep => @separator, :quote_char => @quote_char)
+  end
+
+  def header(stream, column)
+    user_defined = if @headers.key?(stream)
+                     @headers[stream][column]
+                   else
+                     @columns[column]
+                   end
+    user_defined || "column#{column+1}"
+  end
 
   def ignore_field?(index)
     !@columns[index] && !@autogenerate_column_names
