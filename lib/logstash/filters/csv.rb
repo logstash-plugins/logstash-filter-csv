@@ -23,7 +23,8 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   config :columns, :validate => :array, :default => []
 
   # Define the column separator value. If this is not specified, the default
-  # is a comma `,`.
+  # is a comma `,`. If you want to define a tabulation as a separator, you need
+  # to set the value to the actual tab character and not `\t`.
   # Optional.
   config :separator, :validate => :string, :default => ","
 
