@@ -1,7 +1,6 @@
 # Logstash Plugin
 
-[![Build
-Status](http://build-eu-00.elastic.co/view/LS%20Plugins/view/LS%20Filters/job/logstash-plugin-filter-csv-unit/badge/icon)](http://build-eu-00.elastic.co/view/LS%20Plugins/view/LS%20Filters/job/logstash-plugin-filter-csv-unit/)
+[![Travis Build Status](https://travis-ci.org/logstash-plugins/logstash-filter-csv.svg)](https://travis-ci.org/logstash-plugins/logstash-filter-csv)
 
 This is a plugin for [Logstash](https://github.com/elastic/logstash).
 
