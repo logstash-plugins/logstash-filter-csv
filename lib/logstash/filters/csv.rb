@@ -96,6 +96,13 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
     # make sure @target is in the format [field name] if defined, i.e. surrounded by brakets
     @target = "[#{@target}]" if @target && @target !~ /^\[[^\[\]]+\]$/
+    
+    # if the zero byte character is entered in the config, set the value
+    if (@quote_char == "\\x00")
+      @quote_char = "\x00"
+    end
+    
+    @logger.debug? && @logger.debug("CSV parsing options", :col_sep => @separator, :quote_char => @quote_char)
   end
 
   def filter(event)
