@@ -39,14 +39,14 @@ describe LogStash::Filters::CSV do
 
       it "extract all the values" do
         plugin.filter(event)
-        expect(event["column1"]).to eq("big")
-        expect(event["column2"]).to eq("bird")
-        expect(event["column3"]).to eq("sesame street")
+        expect(event.get("column1")).to eq("big")
+        expect(event.get("column2")).to eq("bird")
+        expect(event.get("column3")).to eq("sesame street")
       end
 
       it "should not mutate the source field" do
         plugin.filter(event)
-        expect(event["message"]).to be_kind_of(String)
+        expect(event.get("message")).to be_kind_of(String)
       end
     end
 
@@ -58,8 +58,8 @@ describe LogStash::Filters::CSV do
       end
       it "extract all the values" do
         plugin.filter(event)
-        expect(event["column1"]).to eq("big,bird")
-        expect(event["column2"]).to eq("sesame street")
+        expect(event.get("column1")).to eq("big,bird")
+        expect(event.get("column2")).to eq("sesame street")
       end
     end
 
@@ -72,9 +72,9 @@ describe LogStash::Filters::CSV do
 
       it "extract all the values" do
         plugin.filter(event)
-        expect(event["column1"]).to eq("big")
-        expect(event["column2"]).to eq("bird")
-        expect(event["column3"]).to eq("sesame street")
+        expect(event.get("column1")).to eq("big")
+        expect(event.get("column2")).to eq("bird")
+        expect(event.get("column3")).to eq("sesame street")
       end
 
       context "using the default one" do
@@ -83,9 +83,9 @@ describe LogStash::Filters::CSV do
 
         it "extract all the values" do
           plugin.filter(event)
-          expect(event["column1"]).to eq("big")
-          expect(event["column2"]).to eq("bird")
-          expect(event["column3"]).to eq("sesame, street")
+          expect(event.get("column1")).to eq("big")
+          expect(event.get("column2")).to eq("bird")
+          expect(event.get("column3")).to eq("sesame, street")
         end
       end
 
@@ -97,9 +97,9 @@ describe LogStash::Filters::CSV do
 
         it "extract all the values" do
           plugin.filter(event)
-          expect(event["column1"]).to eq("big")
-          expect(event["column2"]).to eq("bird")
-          expect(event["column3"]).to eq('"sesame" street')
+          expect(event.get("column1")).to eq("big")
+          expect(event.get("column2")).to eq("bird")
+          expect(event.get("column3")).to eq('"sesame" street')
         end
       end
     end
@@ -112,9 +112,9 @@ describe LogStash::Filters::CSV do
 
       it "extract all the values" do
         plugin.filter(event)
-        expect(event["first"]).to eq("big")
-        expect(event["last"]).to eq("bird")
-        expect(event["address"]).to eq("sesame street")
+        expect(event.get("first")).to eq("big")
+        expect(event.get("last")).to eq("bird")
+        expect(event.get("address")).to eq("sesame street")
       end
 
       context "parse csv without autogeneration of names" do
@@ -127,9 +127,9 @@ describe LogStash::Filters::CSV do
 
         it "extract all the values" do
           plugin.filter(event)
-          expect(event["custom1"]).to eq("val1")
-          expect(event["custom2"]).to eq("val2")
-          expect(event["column3"]).to be_falsey
+          expect(event.get("custom1")).to eq("val1")
+          expect(event.get("custom2")).to eq("val2")
+          expect(event.get("column3")).to be_falsey
         end
       end
 
@@ -147,9 +147,9 @@ describe LogStash::Filters::CSV do
 
         it "extract all the values" do
           plugin.filter(event)
-          expect(event["custom1"]).to eq("val1")
-          expect(event["custom2"]).to be_falsey
-          expect(event["custom3"]).to eq("val3")
+          expect(event.get("custom1")).to eq("val1")
+          expect(event.get("custom2")).to be_falsey
+          expect(event.get("custom3")).to eq("val3")
         end
       end
 
@@ -161,9 +161,9 @@ describe LogStash::Filters::CSV do
 
         it "extract all the values" do
           plugin.filter(event)
-          expect(event["custom1"]).to eq("val1")
-          expect(event["custom2"]).to eq("val2")
-          expect(event["column3"]).to eq("val3")
+          expect(event.get("custom1")).to eq("val1")
+          expect(event.get("custom2")).to eq("val2")
+          expect(event.get("column3")).to eq("val3")
         end
       end
 
@@ -177,9 +177,9 @@ describe LogStash::Filters::CSV do
 
         it "extract all the values" do
           plugin.filter(event)
-          expect(event["custom1"]).to eq("val1")
-          expect(event["custom2"]).to eq("val2")
-          expect(event["custom3"]).to eq("val3")
+          expect(event.get("custom1")).to eq("val1")
+          expect(event.get("custom2")).to eq("val2")
+          expect(event.get("custom3")).to eq("val3")
         end
       end
     end
@@ -193,9 +193,9 @@ describe LogStash::Filters::CSV do
 
       it "extract all the values" do
         plugin.filter(event)
-        expect(event["data"]["column1"]).to eq("big")
-        expect(event["data"]["column2"]).to eq("bird")
-        expect(event["data"]["column3"]).to eq("sesame street")
+        expect(event.get("data")["column1"]).to eq("big")
+        expect(event.get("data")["column2"]).to eq("bird")
+        expect(event.get("data")["column3"]).to eq("sesame street")
       end
 
       context "when having also source" do
@@ -208,9 +208,9 @@ describe LogStash::Filters::CSV do
 
         it "extract all the values" do
           plugin.filter(event)
-          expect(event["data"]["column1"]).to eq("big")
-          expect(event["data"]["column2"]).to eq("bird")
-          expect(event["data"]["column3"]).to eq("sesame street")
+          expect(event.get("data")["column1"]).to eq("big")
+          expect(event.get("data")["column2"]).to eq("bird")
+          expect(event.get("data")["column3"]).to eq("sesame street")
         end
       end
     end
@@ -225,9 +225,9 @@ describe LogStash::Filters::CSV do
 
       it "get converted values to the expected type" do
         plugin.filter(event)
-        expect(event["column1"]).to eq(1234)
-        expect(event["column2"]).to eq("bird")
-        expect(event["column3"]).to eq(false)
+        expect(event.get("column1")).to eq(1234)
+        expect(event.get("column2")).to eq("bird")
+        expect(event.get("column3")).to eq(false)
       end
 
       context "when using column names" do
@@ -239,9 +239,9 @@ describe LogStash::Filters::CSV do
 
         it "get converted values to the expected type" do
           plugin.filter(event)
-          expect(event["custom1"]).to eq(1234)
-          expect(event["custom2"]).to eq("bird")
-          expect(event["custom3"]).to eq(false)
+          expect(event.get("custom1")).to eq(1234)
+          expect(event.get("custom2")).to eq("bird")
+          expect(event.get("custom3")).to eq(false)
         end
       end
     end
