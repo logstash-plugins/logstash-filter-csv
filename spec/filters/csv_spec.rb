@@ -102,6 +102,20 @@ describe LogStash::Filters::CSV do
           expect(event.get("column3")).to eq('"sesame" street')
         end
       end
+      
+      context "using a null as read from config" do
+        let(:doc) { 'big,bird,"sesame" street' }
+        let(:config) do
+          { "quote_char" => "\\x00" }
+        end
+
+        it "extract all the values" do
+          plugin.filter(event)
+          expect(event.get("column1")).to eq("big")
+          expect(event.get("column2")).to eq("bird")
+          expect(event.get("column3")).to eq('"sesame" street')
+        end
+      end
     end
 
     describe "given column names" do
