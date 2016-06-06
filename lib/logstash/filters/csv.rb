@@ -51,7 +51,10 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   # [source,ruby]
   #     filter {
   #       csv {
-  #         convert => { "column1" => "integer", "column2" => "boolean" }
+  #         convert => { 
+  #           "column1" => "integer"
+  #           "column2" => "boolean"
+  #         }
   #       }
   #     }
   config :convert, :validate => :hash, :default => {}
