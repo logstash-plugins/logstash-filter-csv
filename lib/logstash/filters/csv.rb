@@ -56,6 +56,10 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   #     }
   config :convert, :validate => :hash, :default => {}
 
+  # Define whether column names should be auto-detected from the header column or not.
+  # Defaults to false.
+  config :autodetect_column_names, :validate => :boolean, :default => false
+
   CONVERTERS = {
     :integer => lambda do |value|
       CSV::Converters[:integer].call(value)
@@ -111,6 +115,12 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
     if (source = event.get(@source))
       begin
         values = CSV.parse_line(source, :col_sep => @separator, :quote_char => @quote_char)
+
+        if (@autodetect_column_names && @columns.empty?)
+          @columns = values
+          event.cancel
+          return
+        end
 
         values.each_index do |i|
           unless (@skip_empty_columns && (values[i].nil? || values[i].empty?))

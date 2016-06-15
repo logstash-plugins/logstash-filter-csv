@@ -259,5 +259,21 @@ describe LogStash::Filters::CSV do
         end
       end
     end
+
+    describe "given autodetect option" do
+      let(:header) { LogStash::Event.new("message" => "first,last,address") }
+      let(:doc)    { "big,bird,sesame street" }
+      let(:config) do
+        { "autodetect_column_names" => true }
+      end
+
+      it "extract all the values with the autodetected header" do
+        plugin.filter(header)
+        plugin.filter(event)
+        expect(event.get("first")).to eq("big")
+        expect(event.get("last")).to eq("bird")
+        expect(event.get("address")).to eq("sesame street")
+      end
+    end
   end
 end
