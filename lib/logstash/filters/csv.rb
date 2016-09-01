@@ -103,7 +103,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
     @convert_symbols = @convert.inject({}){|result, (k, v)| result[k] = v.to_sym; result}
 
     # make sure @target is in the format [field name] if defined, i.e. surrounded by brakets
-    @target = "[#{@target}]" if @target && @target !~ /^\[[^\[\]]+\]$/
+    @target = "[#{@target}]" if @target && @target !~ /^(\[[^\[\]]+\])+$/
     
     # if the zero byte character is entered in the config, set the value
     if (@quote_char == "\\x00")
