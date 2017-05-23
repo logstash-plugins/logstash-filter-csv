@@ -74,11 +74,13 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
     end,
 
     :date => lambda do |value|
-      CSV::Converters[:date].call(value)
+      result = CSV::Converters[:date].call(value)
+      result.is_a?(Date) ? LogStash::Timestamp.new(result.to_time) : result
     end,
 
     :date_time => lambda do |value|
-      CSV::Converters[:date_time].call(value)
+      result = CSV::Converters[:date_time].call(value)
+      result.is_a?(DateTime) ? LogStash::Timestamp.new(result.to_time) : result
     end,
 
     :boolean => lambda do |value|

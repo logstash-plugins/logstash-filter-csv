@@ -1,3 +1,6 @@
+## 3.0.3
+  - generate Timestamp objects for correctly converted :date and :date_time fields with related specs.
+
 ## 3.0.2
   - Relax constraint on logstash-core-plugin-api to >= 1.60 <= 2.99
 

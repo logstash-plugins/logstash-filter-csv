@@ -20,7 +20,7 @@ describe LogStash::Filters::CSV do
 
       it "should register" do
         input = LogStash::Plugin.lookup("filter", "csv").new(config)
-        expect {input.register}.to raise_error
+        expect {input.register}.to raise_error(LogStash::ConfigurationError)
       end
     end
   end
@@ -232,16 +232,62 @@ describe LogStash::Filters::CSV do
     describe "using field convertion" do
 
       let(:config) do
-        { "convert" => { "column1" => "integer", "column3" => "boolean" } }
+        {
+            "convert" => {
+                "column1" => "integer",
+                "column3" => "boolean",
+                "column4" => "float",
+                "column5" => "date",
+                "column6" => "date_time",
+                "column7" => "date",
+                "column8" => "date_time",
+            }
+        }
       end
-      let(:doc)   { "1234,bird,false" }
+      # 2017-06-01,2001-02-03T04:05:06+07:00
+      let(:doc)   { "1234,bird,false,3.14159265359,2017-06-01,2001-02-03 04:05:06,invalid_date,invalid_date_time" }
       let(:event) { LogStash::Event.new("message" => doc) }
 
-      it "get converted values to the expected type" do
+      it "converts to integer" do
         plugin.filter(event)
         expect(event.get("column1")).to eq(1234)
+      end
+
+      it "does not convert without converter" do
+        plugin.filter(event)
         expect(event.get("column2")).to eq("bird")
+      end
+
+      it "converts to boolean" do
+        plugin.filter(event)
         expect(event.get("column3")).to eq(false)
+      end
+
+      it "converts to float" do
+        plugin.filter(event)
+        expect(event.get("column4")).to eq(3.14159265359)
+      end
+
+      it "converts to date" do
+        plugin.filter(event)
+        expect(event.get("column5")).to be_a(LogStash::Timestamp)
+        expect(event.get("column5").to_s).to eq(LogStash::Timestamp.new(Date.parse("2017-06-01").to_time).to_s)
+      end
+
+      it "converts to date_time" do
+        plugin.filter(event)
+        expect(event.get("column6")).to be_a(LogStash::Timestamp)
+        expect(event.get("column6").to_s).to eq(LogStash::Timestamp.new(DateTime.parse("2001-02-03 04:05:06").to_time).to_s)
+      end
+
+      it "tries to converts to date but return original" do
+        plugin.filter(event)
+        expect(event.get("column7")).to eq("invalid_date")
+      end
+
+      it "tries to converts to date_time but return original" do
+        plugin.filter(event)
+        expect(event.get("column8")).to eq("invalid_date_time")
       end
 
       context "when using column names" do
