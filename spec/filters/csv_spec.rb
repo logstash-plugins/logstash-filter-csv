@@ -196,6 +196,25 @@ describe LogStash::Filters::CSV do
           expect(event.get("custom3")).to eq("val3")
         end
       end
+
+      context "that use [@metadata]" do
+        let(:metadata_field) { "[@metadata][one]" }
+        let(:config) do
+          {
+            "columns" => [ metadata_field, "foo" ]
+          }
+        end
+
+        let(:event) { LogStash::Event.new("message" => "hello,world") }
+
+        before do
+          plugin.filter(event)
+        end
+
+        it "should work correctly" do
+          expect(event.get(metadata_field)).to eq("hello")
+        end
+      end
     end
 
     describe "givin target" do
@@ -226,6 +245,41 @@ describe LogStash::Filters::CSV do
           expect(event.get("data")["column2"]).to eq("bird")
           expect(event.get("data")["column3"]).to eq("sesame street")
         end
+      end
+
+      context "which uses [nested][fieldref] syntax" do
+        let(:target) { "[foo][bar]" }
+        let(:config) do
+          {
+            "target" => target
+          }
+        end
+
+        let(:event) { LogStash::Event.new("message" => "hello,world") }
+
+        before do
+          plugin.filter(event)
+        end
+
+        it "should set fields correctly in the target" do
+          expect(event.get("#{target}[column1]")).to eq("hello")
+          expect(event.get("#{target}[column2]")).to eq("world")
+        end
+
+        context "with nested fieldrefs as columns" do
+          let(:config) do
+            {
+              "target" => target,
+              "columns" => [ "[test][one]", "[test][two]" ]
+            }
+          end
+
+          it "should set fields correctly in the target" do
+          expect(event.get("#{target}[test][one]")).to eq("hello")
+          expect(event.get("#{target}[test][two]")).to eq("world")
+          end
+        end
+
       end
     end
 

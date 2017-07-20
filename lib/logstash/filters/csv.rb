@@ -105,7 +105,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
     @convert_symbols = @convert.inject({}){|result, (k, v)| result[k] = v.to_sym; result}
 
     # make sure @target is in the format [field name] if defined, i.e. surrounded by brakets
-    @target = "[#{@target}]" if @target && @target !~ /^\[[^\[\]]+\]$/
+    @target = "[#{@target}]" if @target && !@target.start_with?("[")
     
     # if the zero byte character is entered in the config, set the value
     if (@quote_char == "\\x00")
@@ -151,10 +151,14 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   private
 
   # construct the correct Event field reference for given field_name, taking into account @target
-  # @param field_name [String] the bare field name without brakets
+  # @param field_name [String] the field name.
   # @return [String] fully qualified Event field reference also taking into account @target prefix
   def field_ref(field_name)
-    "#{@target}[#{field_name}]"
+    if field_name.start_with?("[")
+      "#{@target}#{field_name}"
+    else
+      "#{@target}[#{field_name}]"
+    end
   end
 
   def ignore_field?(index)
