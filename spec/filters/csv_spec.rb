@@ -275,8 +275,8 @@ describe LogStash::Filters::CSV do
           end
 
           it "should set fields correctly in the target" do
-          expect(event.get("#{target}[test][one]")).to eq("hello")
-          expect(event.get("#{target}[test][two]")).to eq("world")
+            expect(event.get("#{target}[test][one]")).to eq("hello")
+            expect(event.get("#{target}[test][two]")).to eq("world")
           end
         end
 
