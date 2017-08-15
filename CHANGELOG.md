@@ -1,3 +1,6 @@
+## 3.0.5
+  - Fix some documentation issues
+
 ## 3.0.3
   - generate Timestamp objects for correctly converted :date and :date_time fields with related specs.
 
