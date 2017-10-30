@@ -1,3 +1,6 @@
+## 3.0.6
+  - Fix a bug where `[nested][field]` references were incorrectly used. (#24, #52)
+
 ## 3.0.5
   - Fix some documentation issues
 
