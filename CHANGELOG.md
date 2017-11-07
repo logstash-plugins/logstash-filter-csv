@@ -1,3 +1,6 @@
+## 3.0.7
+  - Update gemspec summary
+
 ## 3.0.6
   - Fix a bug where `[nested][field]` references were incorrectly used. (#24, #52)
 
