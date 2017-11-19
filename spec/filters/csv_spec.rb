@@ -147,6 +147,19 @@ describe LogStash::Filters::CSV do
         end
       end
 
+      context "parse csv and skip the header" do
+        let(:doc)    { "first_column,second_column,third_column" }
+        let(:config) do
+          { "skip_header" => true,
+            "columns" => ["first_column", "second_column", "third_column"] }
+        end
+
+        it "expects the event to be cancelled" do
+          plugin.filter(event)
+          expect(event).to be_cancelled
+        end
+      end
+
       context "parse csv skipping empty columns" do
 
         let(:doc)    { "val1,,val3" }

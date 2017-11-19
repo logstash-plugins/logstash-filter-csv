@@ -41,6 +41,10 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   # Defaults to true. If set to false, columns not having a header specified will not be parsed.
   config :autogenerate_column_names, :validate => :boolean, :default => true
 
+  # Define whether the header should be skipped or not
+  # Defaults to false, If set to true, the header is dropped
+  config :skip_header, :validate => :boolean, :default => false
+
   # Define whether empty columns should be skipped.
   # Defaults to false. If set to true, columns containing no value will not get set.
   config :skip_empty_columns, :validate => :boolean, :default => false
@@ -124,6 +128,11 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
         if (@autodetect_column_names && @columns.empty?)
           @columns = values
+          event.cancel
+          return
+        end
+
+        if (@skip_header && (!@columns.empty?) && (@columns == values))
           event.cancel
           return
         end
