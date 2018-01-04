@@ -59,7 +59,8 @@ describe LogStash::Filters::CSV do
 
       it "skips empty rows" do
         plugin.filter(event)
-        expect(event).to be_cancelled  
+        expect(event.get("tags")).to include("_csvskippedemptyfield") 
+        expect(event).not_to be_cancelled 
       end
     end
 
