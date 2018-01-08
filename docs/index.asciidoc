@@ -39,6 +39,7 @@ This plugin supports the following configuration options plus the <<plugins-{typ
 | <<plugins-{type}s-{plugin}-quote_char>> |<<string,string>>|No
 | <<plugins-{type}s-{plugin}-separator>> |<<string,string>>|No
 | <<plugins-{type}s-{plugin}-skip_empty_columns>> |<<boolean,boolean>>|No
+| <<plugins-{type}s-{plugin}-skip_empty_rows>> |<<boolean,boolean>>|No
 | <<plugins-{type}s-{plugin}-source>> |<<string,string>>|No
 | <<plugins-{type}s-{plugin}-target>> |<<string,string>>|No
 |=======================================================================
@@ -128,6 +129,16 @@ Optional.
 
 Define whether empty columns should be skipped.
 Defaults to false. If set to true, columns containing no value will not get set.
+
+[id="plugins-{type}s-{plugin}-skip_empty_rows"]
+===== `skip_empty_rows` 
+
+  * Value type is <<boolean,boolean>>
+  * Default value is `false`
+
+Define whether empty rows could potentially be skipped.
+Defaults to false. If set to true, rows containing no value will be tagged with "_csvskippedemptyfield".
+This tag can referenced by users if they wish to cancel events using an 'if' conditional statement.
 
 [id="plugins-{type}s-{plugin}-source"]
 ===== `source` 
