@@ -1,3 +1,6 @@
+## 3.0.8
+  - feature: Added support for tagging empty rows which users can reference to conditionally drop events
+
 ## 3.0.7
   - Update gemspec summary
 

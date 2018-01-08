@@ -50,6 +50,20 @@ describe LogStash::Filters::CSV do
       end
     end
 
+    describe "empty message" do
+      let(:doc) { "" }
+
+      let(:config) do
+        { "skip_empty_rows" => true }
+      end
+
+      it "skips empty rows" do
+        plugin.filter(event)
+        expect(event.get("tags")).to include("_csvskippedemptyfield") 
+        expect(event).not_to be_cancelled 
+      end
+    end
+
     describe "custom separator" do
       let(:doc) { "big,bird;sesame street" }
 

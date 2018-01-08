@@ -45,6 +45,11 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   # Defaults to false. If set to true, columns containing no value will not get set.
   config :skip_empty_columns, :validate => :boolean, :default => false
 
+  # Define whether empty rows could potentially be skipped.
+  # Defaults to false. If set to true, rows containing no value will be tagged with _csvskippedemptyfield.
+  # This tag can referenced by users if they wish to cancel events using an 'if' conditional statement.
+  config :skip_empty_rows, :validate => :boolean, :default => false
+
   # Define a set of datatype conversions to be applied to columns.
   # Possible conversions are integer, float, date, date_time, boolean
   #
@@ -120,7 +125,14 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
 
     if (source = event.get(@source))
       begin
-        values = CSV.parse_line(source, :col_sep => @separator, :quote_char => @quote_char)
+
+        values = CSV.parse_line(source, :col_sep => @separator, :quote_char => @quote_char)        
+
+        if(@skip_empty_rows && values.nil?)
+          # applies tag to empty rows, users can cancel event referencing this tag in an 'if' conditional statement
+          event.tag("_csvskippedemptyfield")
+          return
+        end
 
         if (@autodetect_column_names && @columns.empty?)
           @columns = values
