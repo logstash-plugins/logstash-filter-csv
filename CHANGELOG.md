@@ -1,3 +1,7 @@
+## 3.0.9
+  - Document that the `autodetect_column_names` and `skip_header` options work only when the number of Logstash
+  pipeline workers is set to `1`.
+  
 ## 3.0.8
   - feature: Added support for tagging empty rows which users can reference to conditionally drop events
 
