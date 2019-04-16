@@ -1,3 +1,6 @@
+## 3.0.10
+  - Fix asciidoc formatting for example [#tbd](https://github.com/logstash-plugins/logstash-filter-csv/pull/tbd)
+
 ## 3.0.9
   - Document that the `autodetect_column_names` and `skip_header` options work only when the number of Logstash
   pipeline workers is set to `1`.
