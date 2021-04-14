@@ -1,8 +1,11 @@
+## 3.0.11
+  - [DOC] Fixed formatting to improve readability [#84](https://github.com/logstash-plugins/logstash-filter-csv/pull/84)
+
 ## 3.0.10
-  - Fix asciidoc formatting for example [#73](https://github.com/logstash-plugins/logstash-filter-csv/pull/73)
+  - [DOC] Fix asciidoc formatting for example [#73](https://github.com/logstash-plugins/logstash-filter-csv/pull/73)
 
 ## 3.0.9
-  - Document that the `autodetect_column_names` and `skip_header` options work only when the number of Logstash
+  - [DOC] Document that the `autodetect_column_names` and `skip_header` options work only when the number of Logstash
   pipeline workers is set to `1`.
   
 ## 3.0.8
