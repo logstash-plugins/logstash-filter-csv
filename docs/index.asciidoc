@@ -121,7 +121,6 @@ Example:
 Controls this plugin's compatibility with the
 {ecs-ref}[Elastic Common Schema (ECS)].
 See <<plugins-{type}s-{plugin}-ecs_metadata>> for detailed information.
-The value of this setting affects the _default_ value of <<plugins-{type}s-{plugin}-???>>
 
 [id="plugins-{type}s-{plugin}-quote_char"]
 ===== `quote_char` 
