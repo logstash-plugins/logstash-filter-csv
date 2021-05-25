@@ -1,3 +1,6 @@
+## 3.1.0
+  - Add ECS support 
+
 ## 3.0.11
   - [DOC] Fixed formatting to improve readability [#84](https://github.com/logstash-plugins/logstash-filter-csv/pull/84)
 
