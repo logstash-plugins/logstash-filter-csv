@@ -26,8 +26,8 @@ This filter can parse data with any separator, not just commas.
 
 [id="plugins-{type}s-{plugin}-ecs_metadata"]
 ==== Event Metadata and the Elastic Common Schema (ECS)
-When ECS compatibility is disabled, the value is stored in the root level.
-When ECS is enabled, the value is stored in the `target` field.
+The plugin behaves the same except giving a warning when ECS is enabled and `target` isn't set.
+It is recommended to set the `target` option to avoid potential schema conflicts.
 
 [id="plugins-{type}s-{plugin}-options"]
 ==== Csv Filter Configuration Options
