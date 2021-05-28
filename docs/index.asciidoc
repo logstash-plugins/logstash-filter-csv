@@ -197,11 +197,6 @@ data structure.
 Define target field for placing the data.
 Defaults to writing to the root of the event.
 
-Without a `target`, events are created from each row column at the root level.
-When the `target` is set to a field reference, the column of each row is placed in the target field instead.
-
-This option can be useful to avoid populating unknown fields when a downstream schema such as ECS is enforced.
-
 
 [id="plugins-{type}s-{plugin}-common-options"]
 include::{include_path}/{type}.asciidoc[]
