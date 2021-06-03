@@ -1,6 +1,7 @@
 # encoding: utf-8
 require "logstash/filters/base"
 require "logstash/namespace"
+require "logstash/plugin_mixins/ecs_compatibility_support"
 
 require "csv"
 
@@ -8,6 +9,8 @@ require "csv"
 # and stores it as individual fields (can optionally specify the names).
 # This filter can also parse data with any separator, not just commas.
 class LogStash::Filters::CSV < LogStash::Filters::Base
+  include LogStash::PluginMixins::ECSCompatibilitySupport(:disabled, :v1, :v8 => :v1)
+
   config_name "csv"
 
   # The CSV data in the value of the `source` field will be expanded into a
@@ -101,6 +104,15 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   }
   CONVERTERS.default = lambda {|v| v}
   CONVERTERS.freeze
+
+  def initialize(params)
+    super
+    if ecs_compatibility != :disabled && @target.nil?
+      logger.info('ECS compatibility is enabled but no ``target`` option was specified, it is recommended'\
+                  ' to set the option to avoid potential schema conflicts (if your data is ECS compliant or'\
+                  ' non-conflicting feel free to ignore this message)')
+    end
+  end
 
   def register
     # validate conversion types to be the valid ones.

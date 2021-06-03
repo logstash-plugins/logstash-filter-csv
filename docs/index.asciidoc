@@ -24,6 +24,12 @@ The CSV filter takes an event field containing CSV data, parses it,
 and stores it as individual fields with optionally-specified field names.
 This filter can parse data with any separator, not just commas.
 
+[id="plugins-{type}s-{plugin}-ecs_metadata"]
+==== Event Metadata and the Elastic Common Schema (ECS)
+The plugin behaves the same regardless of ECS compatibility, except giving a warning when ECS is enabled and `target` isn't set.
+
+TIP: Set the `target` option to avoid potential schema conflicts.
+
 [id="plugins-{type}s-{plugin}-options"]
 ==== Csv Filter Configuration Options
 
@@ -36,6 +42,7 @@ This plugin supports the following configuration options plus the <<plugins-{typ
 | <<plugins-{type}s-{plugin}-autogenerate_column_names>> |<<boolean,boolean>>|No
 | <<plugins-{type}s-{plugin}-columns>> |<<array,array>>|No
 | <<plugins-{type}s-{plugin}-convert>> |<<hash,hash>>|No
+| <<plugins-{type}s-{plugin}-ecs_compatibility>> | <<string,string>>|No
 | <<plugins-{type}s-{plugin}-quote_char>> |<<string,string>>|No
 | <<plugins-{type}s-{plugin}-separator>> |<<string,string>>|No
 | <<plugins-{type}s-{plugin}-skip_empty_columns>> |<<boolean,boolean>>|No
@@ -103,6 +110,18 @@ Example:
         }
       }
     }
+
+[id="plugins-{type}s-{plugin}-ecs_compatibility"]
+===== `ecs_compatibility`
+
+* Value type is <<string,string>>
+* Supported values are:
+** `disabled`: does not use ECS-compatible field names
+** `v1`: uses the value in `target` as field name
+
+Controls this plugin's compatibility with the
+{ecs-ref}[Elastic Common Schema (ECS)].
+See <<plugins-{type}s-{plugin}-ecs_metadata>> for detailed information.
 
 [id="plugins-{type}s-{plugin}-quote_char"]
 ===== `quote_char` 
@@ -178,7 +197,6 @@ data structure.
 
 Define target field for placing the data.
 Defaults to writing to the root of the event.
-
 
 
 [id="plugins-{type}s-{plugin}-common-options"]
