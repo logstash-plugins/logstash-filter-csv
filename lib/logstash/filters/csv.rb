@@ -121,7 +121,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
     # @convert_symbols contains the symbolized types to avoid symbol conversion in the transform method
     @convert_symbols = @convert.inject({}){|result, (k, v)| result[k] = v.to_sym; result}
 
-    # make sure @target is in the format [field name] if defined, i.e. surrounded by brakets
+    # make sure @target is in the format [field name] if defined, i.e. surrounded by brackets
     @target = "[#{@target}]" if @target && !@target.start_with?("[")
     
     # if the zero byte character is entered in the config, set the value
@@ -133,7 +133,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
   end
 
   def filter(event)
-    @logger.debug? && @logger.debug("Running csv filter", :event => event)
+    @logger.debug? && @logger.debug("Running csv filter", :event => event.to_hash)
 
     if (source = event.get(@source))
       begin
@@ -174,7 +174,7 @@ class LogStash::Filters::CSV < LogStash::Filters::Base
       end
     end
 
-    @logger.debug? && @logger.debug("Event after csv filter", :event => event)
+    @logger.debug? && @logger.debug("Event after csv filter", :event => event.to_hash)
   end
 
   private
