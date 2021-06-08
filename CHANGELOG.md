@@ -1,3 +1,6 @@
+## 3.1.1
+  - Refactor: unified ECS target + validate field reference [#86](https://github.com/logstash-plugins/logstash-filter-csv/pull/86)
+
 ## 3.1.0
   - Add ECS support [#85](https://github.com/logstash-plugins/logstash-filter-csv/pull/85)
 
