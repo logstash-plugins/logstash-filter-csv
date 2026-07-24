@@ -1,5 +1,5 @@
 ## 3.1.2
-  - Pin `csv` dependency to `< 3.2.6` to avoid a JRuby CSV.parse_line performance regression introduced in csv 3.2.6
+  - Pin `csv` dependency to `< 3.2.6` to avoid a JRuby CSV.parse_line performance regression introduced in csv 3.2.6 [#94](https://github.com/logstash-plugins/logstash-filter-csv/pull/94)
 
 ## 3.1.1
   - Refactor: unified ECS target + validate field reference [#86](https://github.com/logstash-plugins/logstash-filter-csv/pull/86)
