@@ -25,8 +25,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "logstash-core-plugin-api", ">= 1.60", "<= 2.99"
   s.add_runtime_dependency 'logstash-mixin-ecs_compatibility_support', '~> 1.3'
   s.add_runtime_dependency 'logstash-mixin-validator_support', '~> 1.0'
-  # TODO: unpin once https://github.com/ruby/csv/issues/361 is resolved
-  s.add_runtime_dependency 'csv', '< 3.2.6'
+  s.add_runtime_dependency 'csv', '~> 3.3', '>= 3.3.6'
 
   s.add_development_dependency 'logstash-devutils'
 end
