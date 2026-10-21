@@ -1,5 +1,5 @@
 ## 3.1.3
-  - Require `csv` `~> 3.3, >= 3.3.6`, which fixes the JRuby CSV.parse_line performance regression ([ruby/csv#361](https://github.com/ruby/csv/issues/361)). The `< 3.2.6` pin allowed `logstash-plugin update` to resolve csv 0.1.0, which breaks on Ruby 3 [#XX](https://github.com/logstash-plugins/logstash-filter-csv/pull/XX)
+  - Require `csv` `~> 3.3, >= 3.3.6`, which fixes the JRuby CSV.parse_line performance regression ([ruby/csv#361](https://github.com/ruby/csv/issues/361)). The `< 3.2.6` pin allowed `logstash-plugin update` to resolve csv 0.1.0, which breaks on Ruby 3 [#96](https://github.com/logstash-plugins/logstash-filter-csv/pull/96)
 
 ## 3.1.2
   - Pin `csv` dependency to `< 3.2.6` to avoid a JRuby CSV.parse_line performance regression introduced in csv 3.2.6 [#94](https://github.com/logstash-plugins/logstash-filter-csv/pull/94)
